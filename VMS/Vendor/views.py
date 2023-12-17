@@ -58,16 +58,16 @@ class VendorDetailApiView(APIView,VendorUtils):
                 "[PUT] No vendor data found with id {}".format(vendor_id),
                 status=status.HTTP_404_NOT_FOUND
             )
-        new_name=vendor_instance.name if request.data.get("name")==None else request.data.get("name")
-        new_contact_details=vendor_instance.contact_details if request.data.get("contact_details")==None else request.data.get("contact_details")
-        new_address=vendor_instance.address if request.data.get("address")==None else request.data.get("address")
-        vendor_code=vendor_instance.vendor_code
+        
+        new_name=request.data.get("name")
+        new_contact_details=request.data.get("contact_details")
+        new_address=request.data.get("address")
 
         data={
-            "name":new_name,
-            "contact_details":new_contact_details,
-            "address":new_address,
-            "vendor_code":vendor_code,
+            "name":vendor_instance.name if not new_name else new_name,
+            "contact_details":vendor_instance.contact_details if not new_contact_details else new_contact_details,
+            "address":vendor_instance.address if not new_address else new_address,
+            "vendor_code":vendor_instance.vendor_code,
         }
         serializer=VendorDetailedSerializer(instance=vendor_instance,data=data)
         if serializer.is_valid():
