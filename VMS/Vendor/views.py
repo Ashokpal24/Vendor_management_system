@@ -9,12 +9,16 @@ from .serializer import (
     )
 from django.utils .crypto import get_random_string
 
-class VendorUtils:
+
+
+class VendorUtils():
     def get_object(self,vendor_id):
         try:
             return VendorProfile.objects.get(id=vendor_id)
         except VendorProfile.DoesNotExist:
             return None
+        
+    
 
 class VendorListApiView(APIView):
     def get(self,request,*args, **kwargs):

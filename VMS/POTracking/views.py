@@ -6,6 +6,7 @@ from .serializer import PurchaseListSerializer,PurchaseDetailedSerializer
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import datetime
+from Vendor.signals import ack_signal
 
 class PurchaseOrderUtils():
     def get_object(self,vendor_id):
@@ -130,5 +131,6 @@ class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils):
         serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
         if serializer.is_valid():
             serializer.save()
+            ack_signal.send(sender=self,request=request,instance=po_instance)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
