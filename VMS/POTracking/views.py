@@ -8,6 +8,12 @@ from django.utils import timezone
 from datetime import datetime
 from Vendor.signals import ack_signal
 
+
+# TODO create a completion endpoint for adding the quality rating
+# TODO once completion is hit calculate on_time_delivery_rate
+# TODO also calculate the quality rating average
+# TODO finally calculate the fullfilment rating 
+
 class PurchaseOrderUtils():
     def get_object(self,vendor_id):
         try:
