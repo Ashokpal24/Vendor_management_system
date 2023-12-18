@@ -10,6 +10,7 @@ from Vendor.signals import ack_signal
 
 
 # TODO create a completion endpoint for adding the quality rating
+# TODO create a status change class [TRY]
 # TODO once completion is hit calculate on_time_delivery_rate
 # TODO also calculate the quality rating average
 # TODO finally calculate the fullfilment rating 
@@ -30,6 +31,16 @@ class PurchaseOrderUtils():
             except:
                 return None
         return None
+    
+    def get(self,request, po_id,*args, **kwargs):
+        po_instance=self.get_object(po_id)
+        if not po_instance:
+            return Response(
+                "[GET] No Purchase order found with id {}".format(po_id),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer=PurchaseDetailedSerializer(po_instance)
+        return Response(serializer.data,status=status.HTTP_200_OK)
         
 
 class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
@@ -63,15 +74,6 @@ class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
-    def get(self,request,po_id,*args, **kwargs):
-        po_instance=self.get_object(po_id)
-        if not po_instance:
-            return Response(
-                "[GET] No Purchase order found with id {}".format(po_id),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        serializer=PurchaseDetailedSerializer(po_instance)
-        return Response(serializer.data,status=status.HTTP_200_OK)
 
     def put(self,request,po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
@@ -113,17 +115,8 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
             status=status.HTTP_200_OK
         )
     
-class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils):
-    def get(self,request, po_id,*args, **kwargs):
-        po_instance=self.get_object(po_id)
-        if not po_instance:
-            return Response(
-                "[GET] No Purchase order found with id {}".format(po_id),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        serializer=PurchaseDetailedSerializer(po_instance)
-        return Response(serializer.data,status=status.HTTP_200_OK)
-    
+class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils): 
+       
     def post(self,request, po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
         if not po_instance:
