@@ -23,6 +23,7 @@ class PurchaseOrderUtils():
             except:
                 return None
         return None
+        
 
 class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
     def get(self,request,*args, **kwargs):
@@ -104,3 +105,30 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
             {"res": "Object deleted!"},
             status=status.HTTP_200_OK
         )
+    
+class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils):
+    def get(self,request, po_id,*args, **kwargs):
+        po_instance=self.get_object(po_id)
+        if not po_instance:
+            return Response(
+                "[GET] No Purchase order found with id {}".format(po_id),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer=PurchaseDetailedSerializer(po_instance)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def post(self,request, po_id,*args, **kwargs):
+        po_instance=self.get_object(po_id)
+        if not po_instance:
+            return Response(
+                "[POST] No Purchase order found with id {}".format(po_id),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        data={
+            "acknowledgment_date":timezone.make_aware(datetime.now(),timezone.get_current_timezone())
+        }
+        serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
