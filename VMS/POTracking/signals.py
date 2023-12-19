@@ -1,8 +1,10 @@
 from django.dispatch import receiver,Signal
 from .models import PurchaseOrder
+from Vendor.serializer import VendorMetricSerializer
 from Vendor.models import VendorProfile
-from django.utils import timezone
 from django.db.models import F
+from rest_framework.response import Response
+from rest_framework import status
 
 ack_signal=Signal()
 status_signal=Signal()
@@ -28,14 +30,17 @@ def cal_average_response_time(sender,**kwargs):
 def status_completed(sender,**kwargs):
     instance=kwargs['instance']
 
+    vendor_instance=VendorProfile.objects.get(id=instance.vendor.pk)
+
     po_count=PurchaseOrder.objects.filter(vendor=instance.vendor.pk).count()
-    
+    data={}
     #quality rating
     quality_rate_arr=[]
     for po in PurchaseOrder.objects.filter(vendor=instance.vendor.pk):
         quality_rate_arr.append(po.quality_rating)
-
-    print("Quality rating: "+str(sum(quality_rate_arr)/len(quality_rate_arr)))
+    new_quality_rating_avg=sum(quality_rate_arr)/len(quality_rate_arr)
+    print("Quality rating: "+str(new_quality_rating_avg))
+    data['quality_rating_avg']=new_quality_rating_avg
 
     # on_time_delivery_rate
     completed_po=PurchaseOrder.objects.filter(
@@ -43,13 +48,25 @@ def status_completed(sender,**kwargs):
         status="completed",
         order_completed__lt=F('delivery_date')
     ).count()
-    print("Time delivery rate: "+str(completed_po*100/po_count))
+    new_on_time_delivery_rate=completed_po*100/po_count
+    print("Time delivery rate: "+str(new_on_time_delivery_rate))
+    data['on_time_delivery_rate']=new_on_time_delivery_rate
+
 
     # fulfilment_rate
     completed_po=PurchaseOrder.objects.filter(
         vendor=instance.vendor.pk,
         status="completed"
     ).count()
-    print("Fulfilment Rate: "+str(completed_po*100/po_count))
+    new_fulfillment_rate=completed_po*100/po_count
+    print("Fulfilment Rate: "+str(new_fulfillment_rate))
+    data['fulfillment_rate']=new_fulfillment_rate
+
+    serializer=VendorMetricSerializer(instance=vendor_instance,data=data,partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
