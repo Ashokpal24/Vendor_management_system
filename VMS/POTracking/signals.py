@@ -1,6 +1,8 @@
 from django.dispatch import receiver,Signal
 from .models import PurchaseOrder
 from Vendor.models import VendorProfile
+from django.utils import timezone
+from django.db.models import F
 
 ack_signal=Signal()
 status_signal=Signal()
@@ -24,5 +26,30 @@ def cal_average_response_time(sender,**kwargs):
 
 @receiver(status_signal)
 def status_completed(sender,**kwargs):
+    instance=kwargs['instance']
+
+    po_count=PurchaseOrder.objects.filter(vendor=instance.vendor.pk).count()
     
-    
+    #quality rating
+    quality_rate_arr=[]
+    for po in PurchaseOrder.objects.filter(vendor=instance.vendor.pk):
+        quality_rate_arr.append(po.quality_rating)
+
+    print("Quality rating: "+str(sum(quality_rate_arr)/len(quality_rate_arr)))
+
+    # on_time_delivery_rate
+    completed_po=PurchaseOrder.objects.filter(
+        vendor=instance.vendor.pk,
+        status="completed",
+        order_completed__lt=F('delivery_date')
+    ).count()
+    print("Time delivery rate: "+str(completed_po*100/po_count))
+
+    # fulfilment_rate
+    completed_po=PurchaseOrder.objects.filter(
+        vendor=instance.vendor.pk,
+        status="completed"
+    ).count()
+    print("Fulfilment Rate: "+str(completed_po*100/po_count))
+
+
