@@ -1,8 +1,9 @@
-from django.db.models.signals import post_save
 from django.dispatch import receiver,Signal
-from POTracking.models import PurchaseOrder
+from .models import PurchaseOrder
+from Vendor.models import VendorProfile
 
 ack_signal=Signal()
+status_signal=Signal()
 
 @receiver(ack_signal)
 def cal_average_response_time(sender,**kwargs):
@@ -21,4 +22,7 @@ def cal_average_response_time(sender,**kwargs):
     formatted_time = "{:02.0f}:{:02.0f}".format(hours, minutes)
     print(formatted_time)
 
+@receiver(status_signal)
+def status_completed(sender,**kwargs):
+    
     

@@ -6,7 +6,7 @@ from .serializer import PurchaseListSerializer,PurchaseDetailedSerializer
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import datetime
-from Vendor.signals import ack_signal
+from .signals import ack_signal,status_signal
 
 
 # TODO create a completion endpoint for adding the quality rating
@@ -16,6 +16,8 @@ from Vendor.signals import ack_signal
 # TODO finally calculate the fullfilment rating 
 
 class PurchaseOrderUtils():
+
+    
     def get_object(self,vendor_id):
         try:
             return PurchaseOrder.objects.get(id=vendor_id)
@@ -31,6 +33,12 @@ class PurchaseOrderUtils():
             except:
                 return None
         return None
+    
+    def check_status(self,temp_status):
+        VALID_STATUS=["pending","completed","canceled"]
+        if temp_status not in VALID_STATUS:
+            return None
+        return temp_status
     
     def get(self,request, po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
@@ -86,19 +94,28 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
         new_items=request.data.get("items")
         new_quality_rating=request.data.get("quality_rating")
         new_delivery_date=self.convert_to_timezone(request.data.get("delivery_date"))
-        
+        new_status=self.check_status(request.data.get("status"))
         data={
             # "po_number":po_instance.po_number,
             # "vendor":po_instance.vendor.pk,
             "delivery_date":po_instance.delivery_date if not new_delivery_date else new_delivery_date,
             "items":po_instance.items if not new_items else new_items,
             "quantity":po_instance.quantity if not new_items else len(new_items),
-            "quality_rating": po_instance.quality_rating if not new_quality_rating else new_quality_rating
+            "quality_rating": po_instance.quality_rating if not new_quality_rating else new_quality_rating,
+            "status":po_instance.status if not new_status else new_status
         }
+        
+        if new_status=="completed" and po_instance.status!="completed":
+            data["order_completed"]=timezone.make_aware(datetime.now(),timezone.get_current_timezone())
+            
 
         serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
         if serializer.is_valid():
             serializer.save()
+
+            if new_status=="completed":
+                status_signal.send(sender=self,request=request,instance=po_instance)
+
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

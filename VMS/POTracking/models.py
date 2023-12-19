@@ -13,6 +13,8 @@ class PurchaseOrder(models.Model):
     quality_rating=models.FloatField(default=0.0)
     issue_date=models.DateTimeField(default=timezone.now)
     acknowledgment_date=models.DateTimeField(null=True)
+    order_completed=models.DateTimeField(null=True)
+    order_cancelled=models.DateTimeField(null=True)
 
     def __str__(self) -> str:
         return "Purchase order: {} | vendor id: {} ".format(self.po_number,self.vendor)
