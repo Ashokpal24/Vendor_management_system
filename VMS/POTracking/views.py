@@ -9,12 +9,6 @@ from datetime import datetime
 from .signals import ack_signal,status_signal
 
 
-# TODO create a completion endpoint for adding the quality rating
-# TODO create a status change class [TRY]
-# TODO once completion is hit calculate on_time_delivery_rate
-# TODO also calculate the quality rating average
-# TODO finally calculate the fullfilment rating 
-
 class PurchaseOrderUtils():
 
     
@@ -85,6 +79,7 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
 
     def put(self,request,po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
+        pre_status=po_instance.status # type: ignore
         if not po_instance:
             return Response(
                 "[GET] No Purchase order found with id {}".format(po_id),
@@ -95,6 +90,7 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
         new_quality_rating=request.data.get("quality_rating")
         new_delivery_date=self.convert_to_timezone(request.data.get("delivery_date"))
         new_status=self.check_status(request.data.get("status"))
+
         data={
             # "po_number":po_instance.po_number,
             # "vendor":po_instance.vendor.pk,
@@ -105,7 +101,7 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
             "status":po_instance.status if not new_status else new_status
         }
         
-        if new_status=="completed" and po_instance.status!="completed":
+        if new_status=="completed" and pre_status!="completed":
             data["order_completed"]=timezone.make_aware(datetime.now(),timezone.get_current_timezone())
             
 
@@ -113,9 +109,19 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
         if serializer.is_valid():
             serializer.save()
 
-            if new_status=="completed":
-                status_signal.send(sender=self,request=request,instance=po_instance)
+            if new_status=="completed" and pre_status!="completed":
 
+                #send signal to calculate 
+                signal_rtn=status_signal.send(sender=self,request=request,instance=po_instance)
+
+                #incase of error change back status to pending and return 400
+                if signal_rtn[0][1].status_code!=201: # type: ignore
+
+                    data["status"]="pending"
+                    serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
+                    if serializer.is_valid():serializer.save()
+                    return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
+                
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -146,7 +152,13 @@ class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils):
         }
         serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
         if serializer.is_valid():
+
+            signal_rtn=ack_signal.send(sender=self,request=request,instance=po_instance)
+
+            if signal_rtn[0][1].status_code!=201: # type: ignore
+                return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
+            
             serializer.save()
-            ack_signal.send(sender=self,request=request,instance=po_instance)
+            
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
