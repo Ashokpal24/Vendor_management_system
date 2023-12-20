@@ -92,8 +92,6 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
         new_status=self.check_status(request.data.get("status"))
 
         data={
-            # "po_number":po_instance.po_number,
-            # "vendor":po_instance.vendor.pk,
             "delivery_date":po_instance.delivery_date if not new_delivery_date else new_delivery_date,
             "items":po_instance.items if not new_items else new_items,
             "quantity":po_instance.quantity if not new_items else len(new_items),
@@ -120,6 +118,7 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
                     data["status"]="pending"
                     serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
                     if serializer.is_valid():serializer.save()
+
                     return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
                 
             return Response(serializer.data,status=status.HTTP_201_CREATED)

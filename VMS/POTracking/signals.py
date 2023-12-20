@@ -9,7 +9,6 @@ from rest_framework import status
 ack_signal=Signal()
 status_signal=Signal()
 
-#TODO thing of format to add avg response time
 #TODO start with unit test
 #TODO documentation on 21st
 

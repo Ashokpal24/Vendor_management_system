@@ -8,7 +8,8 @@ class PurchaseListSerializer(serializers.ModelSerializer):
                 "po_number",
                 "vendor",
                 "order_date",
-                "items"]
+                "items",
+                "status"]
 
 class PurchaseDetailedSerializer(serializers.ModelSerializer):
     class Meta:
