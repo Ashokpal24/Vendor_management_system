@@ -17,17 +17,17 @@ class UserRegisterView(APIView):
             user.set_password(request.data.get('password'))
             user.save()
             token=Token.objects.create(user=user)
-            return Response({'token':token.key,'user':serializer.data})
+            return Response({'token':token.key,'user':serializer.data},status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class UserLoginView(APIView):
     def post(self,request,*args, **kwargs):
         user=get_object_or_404(User,username=request.data.get('username'))
         if not user.check_password(request.data.get('password')):
-            return Response("Missing user", status=status.HTTP_404_NOT_FOUND)
+            return Response("Wrong Password", status=status.HTTP_404_NOT_FOUND)
         token, created = Token.objects.get_or_create(user=user)
         serializer = UserSerializer(user)
-        return Response({'token': token.key, 'user': serializer.data})
+        return Response({'token': token.key, 'user': serializer.data},status=status.HTTP_202_ACCEPTED)
     
     
 class UserLogoutView(APIView):

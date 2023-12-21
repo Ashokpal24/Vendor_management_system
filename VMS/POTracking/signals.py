@@ -15,7 +15,7 @@ status_signal=Signal()
 
 @receiver(ack_signal)
 def cal_average_response_time(sender,**kwargs):
-    print("Signal received from PO!!")
+    # print("Signal received from PO!!")
     instance=kwargs['instance']
     vendor_instance=VendorProfile.objects.get(id=instance.vendor.pk)
 

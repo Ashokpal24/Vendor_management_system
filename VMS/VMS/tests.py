@@ -76,11 +76,29 @@ class MainTestCase(APITestCase):
 
     # Auth
         
-    # TODO add auth test
+    def test_register(self):
+        new_url="/api/register"
+        response=self.client.post(new_url,{"username":"testuser2","password":"testpass2"},format='json')
+        self.assertEqual(response.status_code,status.HTTP_202_ACCEPTED)
     
-    # Vendor
-    def test_add_vendor(self):
+    def test_invalid_register(self):
+        new_url="/api/register"
+        response=self.client.post(new_url,{"username":"","password":"testpass"},format='json')
+        self.assertEqual(response.status_code,status.HTTP_400_BAD_REQUEST)
+    
+    def test_login(self):
+        new_url="/api/login"
+        response=self.client.post(new_url,{"username":"testuser","password":"testpassword"},format='json')
+        self.assertEqual(response.status_code,status.HTTP_202_ACCEPTED)
+    
+    def test_invalid_login(self):
+        new_url="/api/login"
+        response=self.client.post(new_url,{"username":"","password":"testpassword"},format='json')
+        self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
 
+    # Vendor
+        
+    def test_add_vendor(self):
         response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
 
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
@@ -140,7 +158,6 @@ class MainTestCase(APITestCase):
         new_url=self.vendor_url+"/1/performance"
         response=self.client.get(new_url,HTTP_AUTHORIZATION=f'Token {self.token.key}')
         self.assertEqual(response.status_code,status.HTTP_200_OK,)
-
 
     # Purchase Order
 
@@ -284,10 +301,3 @@ class MainTestCase(APITestCase):
         
         self.assertEqual(response.status_code,status.HTTP_200_OK)
         self.assertEqual(VendorProfile.objects.get(id=2).fulfillment_rate,100)
-
-
-
-
-
-
-
