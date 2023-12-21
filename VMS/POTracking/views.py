@@ -65,8 +65,8 @@ class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
             "po_number":get_random_string(length=3),
             "vendor":request.data.get("vendor"),
             "delivery_date":new_delivery_date,
-            "items":"" if len(new_items)==0 else new_items,
-            "quantity":len(new_items),
+            "items":[] if not new_items  else new_items,
+            "quantity":0 if not new_items else len(new_items),
             "quality_rating": 0.0 if not new_quality_rating else new_quality_rating
         }
         serializer=PurchaseDetailedSerializer(data=data)

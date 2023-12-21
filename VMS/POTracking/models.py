@@ -17,6 +17,9 @@ class PurchaseOrder(models.Model):
     order_cancelled=models.DateTimeField(null=True)
 
     def __str__(self) -> str:
-        return "Purchase order: {} | vendor id: {} ".format(self.po_number,self.vendor)
+        items_arr=[]
+        for item in self.items:
+            items_arr.append(item)
+        return "Purchase order: {} | vendor id: {} | Quantity: {} | items: {}".format(self.po_number,self.vendor.pk,self.quantity,items_arr)
 
         

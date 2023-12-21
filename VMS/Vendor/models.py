@@ -11,5 +11,6 @@ class VendorProfile(models.Model):
     fulfillment_rate=models.FloatField(default=0.0)
 
     def __str__(self) -> str:
-        return "vendor: {} | code: {} ".format(self.name,self.vendor_code)
+
+        return "vendor: {} | code: {} | vendor_id: {} ".format(self.name,self.vendor_code,self.pk)
 
