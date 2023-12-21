@@ -11,7 +11,6 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 
 
-# TODO add logic to issue time through POST operation so the test can run
 class MainTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpassword')
@@ -32,7 +31,7 @@ class MainTestCase(APITestCase):
 
         self.po_data={
                 "vendor": 2,
-                "delivery_date": "21-12-2023 09:30",
+                "delivery_date": "19-12-2023 09:30",
                 "items": [
                     {
                     "name": "i9 9th Gen",
@@ -58,7 +57,7 @@ class MainTestCase(APITestCase):
         self.po=PurchaseOrder.objects.create(
             po_number="ABC",
             vendor=self.vendor,
-            delivery_date=PurchaseOrderUtils().convert_to_timezone("20-12-2023 09:30"),
+            delivery_date=PurchaseOrderUtils().convert_to_timezone("24-12-2023 09:30"),
             items=[
                 {
                     "name": "Ryzen 5900",
@@ -74,9 +73,12 @@ class MainTestCase(APITestCase):
             quantity=2,
             quality_rating=0.0
         )
-    def test_login(self):
-        pass
+
+    # Auth
+        
+    # TODO add auth test
     
+    # Vendor
     def test_add_vendor(self):
 
         response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
@@ -134,6 +136,12 @@ class MainTestCase(APITestCase):
         self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
         self.assertEqual(VendorProfile.objects.count(),1)
 
+    def test_get_vendor_performance(self):
+        new_url=self.vendor_url+"/1/performance"
+        response=self.client.get(new_url,HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.assertEqual(response.status_code,status.HTTP_200_OK,)
+
+
     # Purchase Order
 
     def test_add_po(self):
@@ -144,7 +152,7 @@ class MainTestCase(APITestCase):
 
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
         self.assertEqual(PurchaseOrder.objects.count(),2)
-        self.assertEqual(PurchaseOrder.objects.get(id=2).delivery_date,po_cls_instance.convert_to_timezone("21-12-2023 09:30"))
+        self.assertEqual(PurchaseOrder.objects.get(id=2).delivery_date,po_cls_instance.convert_to_timezone(self.po_data["delivery_date"]))
 
 
     def test_add_po_to_invalid_vendor(self):
@@ -203,7 +211,7 @@ class MainTestCase(APITestCase):
         new_url=self.po_url+"/2"
         response=self.client.put(new_url,new_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
 
-        self.assertEqual(response.status_code,status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
         self.assertEqual(PurchaseOrder.objects.get(id=2).quantity,3)
 
 
@@ -220,6 +228,63 @@ class MainTestCase(APITestCase):
         response=self.client.post(new_url,{},HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
         self.assertIsNotNone(PurchaseOrder.objects.get(id=1).acknowledgment_date)
+
+    def test_po_status(self):
+        response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        response=self.client.post(self.po_url,self.po_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        new_data={"status":"completed"}
+
+        new_url=self.po_url+"/2"
+        response=self.client.put(new_url,new_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        self.assertEqual(PurchaseOrder.objects.get(id=2).status,"completed")
+
+    def test_po_quality_rating_avg(self):
+        response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        response=self.client.post(self.po_url,self.po_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        new_data={"quality_rating":80.0,"status":"completed"}
+
+        new_url=self.po_url+"/2"
+        response=self.client.put(new_url,new_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+
+        self.assertEqual(PurchaseOrder.objects.get(id=2).quality_rating,80.0)
+        self.assertEqual(VendorProfile.objects.get(id=2).name,"Intel")
+        self.assertEqual(VendorProfile.objects.get(id=2).quality_rating_avg,80.0)
+
+    def test_po_on_delivery_rate(self):
+        response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        response=self.client.post(self.po_url,self.po_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        new_data={"status":"completed"}
+
+        new_url=self.po_url+"/2"
+        response=self.client.put(new_url,new_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        
+        target_datetime = datetime.strptime(self.po_data["delivery_date"], "%d-%m-%Y %H:%M")
+        if target_datetime>datetime.now():
+            self.assertEqual(VendorProfile.objects.get(id=2).on_time_delivery_rate,100)
+        else:
+            self.assertEqual(VendorProfile.objects.get(id=2).on_time_delivery_rate,0)
+
+    def test_po_fulfilment_rate(self):
+        response=self.client.post(self.vendor_url,self.vendor_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        response=self.client.post(self.po_url,self.po_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        new_data={"status":"completed"}
+
+        new_url=self.po_url+"/2"
+        response=self.client.put(new_url,new_data,HTTP_AUTHORIZATION=f'Token {self.token.key}',format='json')
+        
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        self.assertEqual(VendorProfile.objects.get(id=2).fulfillment_rate,100)
+
 
 
 

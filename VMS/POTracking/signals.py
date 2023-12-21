@@ -28,14 +28,14 @@ def cal_average_response_time(sender,**kwargs):
             time_differences.append(time_diff)
 
     avg_response_time=sum(time_differences)/len(time_differences) #avg in secs
-    print(avg_response_time)
+    # print(avg_response_time)
 
     # extra formatting if required
     avg_response_time_hrs=(sum(time_differences)/3600)/len(time_differences) if time_differences else 0 # avg in hrs
     hours, minutes = divmod(avg_response_time_hrs * 60, 60)
     # print(hours,minutes)
     formatted_time = "{:02.0f}:{:02.0f}".format(hours, minutes)
-    print(formatted_time)
+    # print(formatted_time)
 
 
     data["average_response_time"]=avg_response_time
@@ -59,8 +59,9 @@ def status_completed(sender,**kwargs):
     quality_rate_arr=[]
     for po in PurchaseOrder.objects.filter(vendor=instance.vendor.pk):
         quality_rate_arr.append(po.quality_rating)
+
     new_quality_rating_avg=sum(quality_rate_arr)/len(quality_rate_arr)
-    print("Quality rating: "+str(new_quality_rating_avg))
+    # print("Quality rating: "+str(new_quality_rating_avg))
     data['quality_rating_avg']=new_quality_rating_avg
 
     # on_time_delivery_rate
@@ -69,9 +70,8 @@ def status_completed(sender,**kwargs):
         status="completed",
         order_completed__lt=F('delivery_date')
     ).count()
-    print(completed_po)
     new_on_time_delivery_rate=completed_po*100/po_count
-    print("Time delivery rate: "+str(new_on_time_delivery_rate))
+    # print("Time delivery rate: "+str(new_on_time_delivery_rate))
     data['on_time_delivery_rate']=new_on_time_delivery_rate
 
 
@@ -80,9 +80,8 @@ def status_completed(sender,**kwargs):
         vendor=instance.vendor.pk,
         status="completed"
     ).count()
-    print(completed_po)
     new_fulfillment_rate=completed_po*100/po_count
-    print("Fulfilment Rate: "+str(new_fulfillment_rate))
+    # print("Fulfilment Rate: "+str(new_fulfillment_rate))
     data['fulfillment_rate']=new_fulfillment_rate
 
     serializer=VendorMetricSerializer(instance=vendor_instance,data=data,partial=True)
