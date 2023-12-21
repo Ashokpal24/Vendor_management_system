@@ -7,11 +7,10 @@ from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import datetime
 from .signals import ack_signal,status_signal
-
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 class PurchaseOrderUtils():
-
-    
     def get_object(self,vendor_id):
         try:
             return PurchaseOrder.objects.get(id=vendor_id)
@@ -46,6 +45,8 @@ class PurchaseOrderUtils():
         
 
 class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self,request,*args, **kwargs):
         po_list=PurchaseOrder.objects.all()
         if po_list:
@@ -76,7 +77,8 @@ class PurchaseOrderListApiView(APIView,PurchaseOrderUtils):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
-
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def put(self,request,po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
         pre_status=po_instance.status # type: ignore
@@ -138,7 +140,8 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
         )
     
 class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils): 
-       
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]       
     def post(self,request, po_id,*args, **kwargs):
         po_instance=self.get_object(po_id)
         if not po_instance:
@@ -146,18 +149,24 @@ class PurchaseOrderAckApiView(APIView,PurchaseOrderUtils):
                 "[POST] No Purchase order found with id {}".format(po_id),
                 status=status.HTTP_404_NOT_FOUND
             )
+        
         data={
-            "acknowledgment_date":timezone.make_aware(datetime.now(),timezone.get_current_timezone())
+            "acknowledgment_date":timezone.now()
         }
         serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
         if serializer.is_valid():
+            serializer.save()
 
             signal_rtn=ack_signal.send(sender=self,request=request,instance=po_instance)
 
             if signal_rtn[0][1].status_code!=201: # type: ignore
+                data={
+                    "acknowledgment_date":timezone.now()
+                }
+                serializer=PurchaseDetailedSerializer(instance=po_instance,data=data,partial=True)
+                if serializer.is_valid():serializer.save()
+                
                 return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
-            
-            serializer.save()
-            
+                
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

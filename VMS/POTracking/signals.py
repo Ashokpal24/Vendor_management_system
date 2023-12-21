@@ -1,3 +1,4 @@
+from audioop import avg
 from django.dispatch import receiver,Signal
 from .models import PurchaseOrder
 from Vendor.serializer import VendorMetricSerializer
@@ -15,7 +16,6 @@ status_signal=Signal()
 @receiver(ack_signal)
 def cal_average_response_time(sender,**kwargs):
     print("Signal received from PO!!")
-    print(sender)
     instance=kwargs['instance']
     vendor_instance=VendorProfile.objects.get(id=instance.vendor.pk)
 
@@ -27,10 +27,16 @@ def cal_average_response_time(sender,**kwargs):
             time_diff=(po.acknowledgment_date-po.issue_date).total_seconds()
             time_differences.append(time_diff)
 
-    print(time_differences) # array
     avg_response_time=sum(time_differences)/len(time_differences) #avg in secs
-    # avg_response_time=(sum(time_differences)/3600)/len(time_differences) if time_differences else 0 # avg in hrs
     print(avg_response_time)
+
+    # extra formatting if required
+    avg_response_time_hrs=(sum(time_differences)/3600)/len(time_differences) if time_differences else 0 # avg in hrs
+    hours, minutes = divmod(avg_response_time_hrs * 60, 60)
+    # print(hours,minutes)
+    formatted_time = "{:02.0f}:{:02.0f}".format(hours, minutes)
+    print(formatted_time)
+
 
     data["average_response_time"]=avg_response_time
     serializer=VendorMetricSerializer(instance=vendor_instance,data=data,partial=True)
@@ -38,12 +44,7 @@ def cal_average_response_time(sender,**kwargs):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    # extra formatting if required
-    # hours, minutes = divmod(avg_response_time * 60, 60)
-    # print(hours,minutes)
-    # formatted_time = "{:02.0f}:{:02.0f}".format(hours, minutes)
-    # print(formatted_time)
-
+   
 
 @receiver(status_signal)
 def status_completed(sender,**kwargs):

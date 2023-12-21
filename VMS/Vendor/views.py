@@ -8,6 +8,8 @@ from .serializer import (
     VendorMetricSerializer
     )
 from django.utils .crypto import get_random_string
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 
 
@@ -21,6 +23,8 @@ class VendorUtils():
     
 
 class VendorListApiView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self,request,*args, **kwargs):
         vendor_list=VendorProfile.objects.all()
         if vendor_list:
@@ -45,6 +49,8 @@ class VendorListApiView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class VendorDetailApiView(APIView,VendorUtils):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self,request,vendor_id,*args, **kwargs):
         vendor_instance=self.get_object(vendor_id)
         if not vendor_instance:
@@ -93,6 +99,8 @@ class VendorDetailApiView(APIView,VendorUtils):
         )
     
 class VendorMetricApiView(APIView,VendorUtils):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self,request,vendor_id,*args, **kwargs):
         vendor_instance=self.get_object(vendor_id)
         if not vendor_instance:

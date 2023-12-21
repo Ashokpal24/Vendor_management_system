@@ -20,6 +20,6 @@ class PurchaseOrder(models.Model):
         items_arr=[]
         for item in self.items:
             items_arr.append(item)
-        return "Purchase order: {} | vendor id: {} | Quantity: {} | items: {}".format(self.po_number,self.vendor.pk,self.quantity,items_arr)
+        return "Purchase order: {} | vendor id: {} | Acknowledge date: {} | Issue date {}".format(self.po_number,self.vendor.pk,self.acknowledgment_date,self.issue_date)
 
         
