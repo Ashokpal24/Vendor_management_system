@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import VendorProfile
+from .models import(
+    VendorProfile, 
+    HistoricalPerformance
+    )
 
 
 class VendorListSerializer(serializers.ModelSerializer):
@@ -24,6 +27,17 @@ class VendorMetricSerializer(serializers.ModelSerializer):
         fields=["id",
                 "name",
                 "vendor_code",
+                "on_time_delivery_rate",
+                "quality_rating_avg",
+                "average_response_time",
+                "fulfillment_rate"]
+
+class HistoricalPerformanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=HistoricalPerformance
+        fields=["id",
+                "vendor",
+                "date",
                 "on_time_delivery_rate",
                 "quality_rating_avg",
                 "average_response_time",

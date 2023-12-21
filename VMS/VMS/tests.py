@@ -1,15 +1,12 @@
 from datetime import datetime
-from django.utils import timezone
 from rest_framework.test import APIClient,APITestCase
 from rest_framework import status
-from POTracking.serializer import PurchaseDetailedSerializer
 from Vendor.models import VendorProfile
 from POTracking.models import PurchaseOrder
 from POTracking.views import PurchaseOrderUtils
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-
 
 class MainTestCase(APITestCase):
     def setUp(self):

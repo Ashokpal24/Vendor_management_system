@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import PurchaseOrder
 from .serializer import PurchaseListSerializer,PurchaseDetailedSerializer
+from Vendor.models import VendorProfile,HistoricalPerformance
+from Vendor.serializer import HistoricalPerformanceSerializer
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import datetime
@@ -122,6 +124,17 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
                     if serializer.is_valid():serializer.save()
 
                     return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
+                else:
+                    # Adding Historical data 
+                    vendor_instance=VendorProfile.objects.get(id=po_instance.vendor.pk)
+                    new_data={
+                        "on_time_delivery_rate":vendor_instance.on_time_delivery_rate,
+                        "quality_rating_avg":vendor_instance.quality_rating_avg,
+                        "average_response_time":vendor_instance.average_response_time,
+                        "fulfillment_rate":vendor_instance.fulfillment_rate
+                    }
+                    serializer=HistoricalPerformanceSerializer(data)
+                    if serializer.is_valid():serializer.save()
                 
             return Response(serializer.data,status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
