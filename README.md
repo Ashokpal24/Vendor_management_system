@@ -181,7 +181,7 @@ Returns all the basic information of vendor.
 
 #### Description
 
-Returns detailed information of specified vendor specified by vendor_id in URL.
+Returns detailed information of specific vendor specified by vendor_id in URL.
 
 #### Request
 
