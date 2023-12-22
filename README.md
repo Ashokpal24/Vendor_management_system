@@ -506,6 +506,7 @@ Update purchase order Information, user can updated any field which was added in
 
 Note: 
 - If status field is changed to `completed`, will start the calculation for other fields in vendor .i.e `quality_rating_avg` , `on_time_delivery_rate` `fulfillment_rate`
+- It is recommended to add `quality_rating` once the order is completed. as `quality_rating_avg` will be calculated here.
 
 
 #### Request
