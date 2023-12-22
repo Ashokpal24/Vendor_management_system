@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import VendorProfile
+from .models import HistoricalPerformance, VendorProfile
 from .serializer import (
+    HistoricalPerformanceSerializer,
     VendorListSerializer,
     VendorDetailedSerializer,
     VendorMetricSerializer
@@ -19,8 +20,7 @@ class VendorUtils():
             return VendorProfile.objects.get(id=vendor_id)
         except VendorProfile.DoesNotExist:
             return None
-        
-    
+
 
 class VendorListApiView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -110,3 +110,16 @@ class VendorMetricApiView(APIView,VendorUtils):
             )
         serializer=VendorMetricSerializer(vendor_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)
+
+class HistoricalPerformanceApiView(APIView,VendorUtils):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self,request,*args, **kwargs):
+        hist_list=HistoricalPerformance.objects.all()
+        if hist_list:
+            serializer=HistoricalPerformanceSerializer(hist_list,many=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(
+            "[GET] No vendor data found",
+            status=status.HTTP_204_NO_CONTENT
+        )
