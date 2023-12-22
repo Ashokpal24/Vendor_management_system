@@ -126,7 +126,7 @@ class PurchaseOrderDetailApiView(APIView,PurchaseOrderUtils):
                     return Response(signal_rtn[0][1].data, status=status.HTTP_400_BAD_REQUEST) # type: ignore
                 else:
                     # Adding Historical data 
-                    print('Historical')
+                    # print('Historical')
                     vendor_instance=VendorProfile.objects.get(id=po_instance.vendor.pk)
 
                     new_data={

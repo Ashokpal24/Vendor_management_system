@@ -1,5 +1,35 @@
 # API Documentation
 
+
+## Start up
+- Install dependency from requirement.txt file
+```bash
+pip install -r requirements.txt
+```
+- move into folder and migrate the DB.
+```bash
+cd VMS
+
+pip manage.py makemigrations
+
+pip manage.py migrate
+
+```
+- Start server
+```bash
+
+pip manage.py runserver
+
+```
+
+## Test
+- To Run test move in VMS folder and run test cmd below.
+
+```bash
+cd VMS
+
+python manage.py test
+```
 ## Base URL
 
 - **Base URL:** `http://127.0.0.1:8000`
@@ -10,7 +40,7 @@
 - Include the `Authorization` header in each request with the format: `Authorization: Token YOUR_TOKEN`.
 - `YOUR_TOKEN` can be generated from login or register endpoints
 
----
+
 
 ## Endpoints of Auth
 
@@ -18,7 +48,7 @@
 
 #### Description
 
-Used to register the user
+Used to register the user.
 
 #### Request
 
@@ -54,7 +84,7 @@ Used to register the user
 
 #### Description
 
-Registered user can login and receive the token
+Registered user can login and receive the token.
 
 #### Request
 
@@ -90,7 +120,7 @@ Registered user can login and receive the token
 
 #### Description
 
-User can be logout , the generated token will be removed and become invalid
+User can logout , the generated token will be removed and become invalid.
 
 #### Request
 
@@ -151,7 +181,7 @@ Returns all the basic information of vendor.
 
 #### Description
 
-Returns the detailed in of specified vendor in url.
+Returns detailed information of specified vendor specified by vendor_id in URL.
 
 #### Request
 
@@ -180,7 +210,7 @@ Returns the detailed in of specified vendor in url.
 
 #### Description
 
-Add new Vendor in the database
+Add new Vendor in the database.
 
 #### Request
 
@@ -217,7 +247,7 @@ Add new Vendor in the database
 
 #### Description
 
-Update Vendor Information, user can updated any field which was added in POST request.
+Update Vendor Information, user can updated any field which was added in `POST` request such as `name`, `contact_details` and `address`.
 
 #### Request
 
@@ -279,7 +309,8 @@ Delete the Vendor with given id in URL.
 
 #### Description
 
-Returns all the purchase order with infomation about vendor id, order_date, items list and status (default status is pending).
+Returns all the purchase order with fields such as vendor id, order_date, items list and status (default status is pending).
+
 
 #### Request
 
@@ -346,12 +377,12 @@ Returns all the purchase order with infomation about vendor id, order_date, item
 
 #### Description
 
-Returns the detailed of specified purchase order in url.
+Returns detailed information of specified po_id in URL.
 
 #### Request
 
 - **Method:** `GET`
-- **URL:** `/api/purchase_orders/<int:vendor_id>`
+- **URL:** `/api/purchase_orders/<int:po_id>`
 - **Headers:**
   - `Authorization: Token YOUR_TOKEN`
   - `Accept : application/json`
@@ -399,7 +430,11 @@ Returns the detailed of specified purchase order in url.
 
 #### Description
 
-Add new purchase order in the database
+Add new purchase order in the database for given vendor id .
+
+Note : 
+- `status` field is auto populated as pending , can be changed using `PUT`.
+- `quantity` field is auto calculated based on items list size.
 
 #### Request
 
@@ -469,12 +504,14 @@ Add new purchase order in the database
 
 Update purchase order Information, user can updated any field which was added in POST request as well as status field.
 
-Note: If status field is changed to `completed`, will start the calculation for other fields in vendor .i.e `quality_rating_avg` , `on_time_delivery_rate` `fulfillment_rate`
+Note: 
+- If status field is changed to `completed`, will start the calculation for other fields in vendor .i.e `quality_rating_avg` , `on_time_delivery_rate` `fulfillment_rate`
+
 
 #### Request
 
 - **Method :** `PUT`
-- **URL :** `/api/purchase_orders/<int:vendor_id>`
+- **URL :** `/api/purchase_orders/<int:po_id>`
 - **Headers :**
   - `Authorization: Token YOUR_TOKEN`
   - `Accept : application/json`
@@ -547,7 +584,7 @@ Delete the purchase_orders with given id in URL.
 #### Request
 
 - **Method :** `DELETE`
-- **URL :** `/api/purchase_orders/<int:vendor_id>`
+- **URL :** `/api/purchase_orders/<int:po_id>`
 - **Headers :**
   - `Authorization: Token YOUR_TOKEN`
   - `Accept : application/json`
@@ -570,7 +607,7 @@ Delete the purchase_orders with given id in URL.
 #### Description
 
 Used by vendors to acknowledge the purchase order.
-this endpoint will trigger the calculation of `average_response_time` for vendor and also populated the `acknowledge_date` field
+this endpoint will trigger the calculation of `average_response_time` for vendor and also populated the `acknowledge_date` field in Purchase order DB
 
 #### Request
 
@@ -579,7 +616,12 @@ this endpoint will trigger the calculation of `average_response_time` for vendor
 - **Headers :**
   - `Authorization: Token YOUR_TOKEN`
   - `Accept : application/json`
-- **Body :**
+- **Body :** empty
+
+#### Success Response
+
+- **Status Code:** `200 OK`
+- **Body:**
   ```json
   {
     "id": 1,
@@ -618,7 +660,7 @@ this endpoint will trigger the calculation of `average_response_time` for vendor
 
 #### Description
 
-Returns performance meterics for Vendors.
+Returns performance metrics for Vendors.
 
 #### Request
 
@@ -649,7 +691,7 @@ Returns performance meterics for Vendors.
 
 #### Description
 
-Everytime status is changed to completed in PO a snap of vendor performance metrics is saved in Historical performance DB, can be used for analysis.
+Everytime `status` is changed to `completed` in Purchase order using `PUT` ,  a snap of vendor performance metrics is saved in Historical performance DB, can be used for analysis.
 
 #### Request
 
