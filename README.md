@@ -610,6 +610,9 @@ Delete the purchase_orders with given id in URL.
 Used by vendors to acknowledge the purchase order.
 this endpoint will trigger the calculation of `average_response_time` for vendor and also populated the `acknowledge_date` field in Purchase order DB
 
+Note :
+- `average_response_time` is stored in secs.
+
 #### Request
 
 - **Method :** `POST`
