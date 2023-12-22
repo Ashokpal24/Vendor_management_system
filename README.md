@@ -8,12 +8,13 @@
 
 - The API uses token-based authentication.
 - Include the `Authorization` header in each request with the format: `Authorization: Token YOUR_TOKEN`.
+- `YOUR_TOKEN` can be generated from login or register endpoints
 
 ---
 
 ## Endpoints of Auth
 
-### 1. **GET /api/register**
+### 1. **POST /api/register**
 
 #### Description
 
@@ -21,10 +22,17 @@ Used to register the user
 
 #### Request
 
-- **Method:** `GET`
+- **Method:** `POST`
 - **URL:** `/api/register`
 - **Headers:**
   - `Accept : application/json`
+- **Body:**
+  ```json
+  {
+    "username": "Avi",
+    "password": "avi123"
+  }
+  ```
 
 #### Success Response
 
@@ -54,6 +62,13 @@ Registered user can login and receive the token
 - **URL:** `/api/login`
 - **Headers:**
   - `Accept : application/json`
+- **Body:**
+  ```json
+  {
+    "username": "Ashok",
+    "password": "ashok123"
+  }
+  ```
 
 #### Success Response
 
@@ -71,7 +86,7 @@ Registered user can login and receive the token
   }
   ```
 
-### 3. **POST /api/logout**
+### 3. **GET /api/logout**
 
 #### Description
 
@@ -79,7 +94,7 @@ User can be logout , the generated token will be removed and become invalid
 
 #### Request
 
-- **Method:** `POST`
+- **Method:** `GET`
 - **URL:** `/api/logout`
 - **Headers:**
   - `Authorization: Token YOUR_TOKEN`
@@ -255,6 +270,8 @@ Delete the Vendor with given id in URL.
   ```json
   { "res": "Object deleted!" }
   ```
+
+---
 
 ## Endpoints of Purchase orders
 
@@ -542,4 +559,130 @@ Delete the purchase_orders with given id in URL.
 
   ```json
   { "res": "Object deleted!" }
+  ```
+
+---
+
+## Endpoints for acknowledgment , performance and Historical performance
+
+### 1. **POST /api/purchase_orders/1/acknowledge**
+
+#### Description
+
+Used by vendors to acknowledge the purchase order.
+this endpoint will trigger the calculation of `average_response_time` for vendor and also populated the `acknowledge_date` field
+
+#### Request
+
+- **Method :** `POST`
+- **URL :** `/api/purchase_orders/<int:po_id>/acknowledge`
+- **Headers :**
+  - `Authorization: Token YOUR_TOKEN`
+  - `Accept : application/json`
+- **Body :**
+  ```json
+  {
+    "id": 1,
+    "po_number": "NPu",
+    "order_date": "2023-12-19T17:31:37.935510Z",
+    "delivery_date": "2023-12-20T09:30:00Z",
+    "items": [
+      {
+        "name": "RTX 3070",
+        "Type": "GPU",
+        "Price": "37000"
+      },
+      {
+        "name": "RTX 2070 super",
+        "Type": "GPU",
+        "Price": "27000"
+      },
+      {
+        "name": "RTX 1070 super",
+        "Type": "GPU",
+        "Price": "12000"
+      }
+    ],
+    "quantity": 3,
+    "status": "completed",
+    "quality_rating": 0.0,
+    "issue_date": "2023-12-19T17:31:37.935531Z",
+    "acknowledgment_date": "2023-12-22T07:40:17.154560Z",
+    "order_completed": "2023-12-22T06:05:17.683106Z",
+    "order_cancelled": null,
+    "vendor": 1
+  }
+  ```
+
+### 2. **GET /api/vendors/1/performance**
+
+#### Description
+
+Returns performance meterics for Vendors.
+
+#### Request
+
+- **Method:** `GET`
+- **URL:** `/api/vendors/<int:vendor_id>/performance`
+- **Headers:**
+  - `Authorization: Token YOUR_TOKEN`
+  - `Accept : application/json`
+
+#### Success Response
+
+- **Status Code:** `200 OK`
+- **Body:**
+
+  ```json
+  {
+    "id": 1,
+    "name": "Nvidia",
+    "vendor_code": "Bte",
+    "on_time_delivery_rate": 0.0,
+    "quality_rating_avg": 0.0,
+    "average_response_time": 149999.24465,
+    "fulfillment_rate": 100.0
+  }
+  ```
+
+### 3. **GET /api/vendors/historical**
+
+#### Description
+
+Everytime status is changed to completed in PO a snap of vendor performance metrics is saved in Historical performance DB, can be used for analysis.
+
+#### Request
+
+- **Method:** `GET`
+- **URL:** `/api/vendors/historical`
+- **Headers:**
+  - `Authorization: Token YOUR_TOKEN`
+  - `Accept : application/json`
+
+#### Success Response
+
+- **Status Code:** `200 OK`
+- **Body:**
+
+  ```json
+  [
+    {
+      "id": 1
+      "vendor": 1,
+      "date": "2023-12-22T06:03:43.717574Z",
+      "on_time_delivery_rate": 0.0,
+      "quality_rating_avg": 0.0,
+      "average_response_time": 77603.2668525,
+      "fulfillment_rate": 100.0
+    },
+    {
+      "id": 2,
+      "vendor": 1,
+      "date": "2023-12-22T06:05:17.745890Z",
+      "on_time_delivery_rate": 0.0,
+      "quality_rating_avg": 0.0,
+      "average_response_time": 77603.2668525,
+      "fulfillment_rate": 100.0
+    }
+  ]
   ```
